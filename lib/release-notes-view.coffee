@@ -47,6 +47,10 @@ class ReleaseNotesView extends View
       @version.text(@releaseVersion)
 
       if @releaseVersion != atom.getVersion()
+        # Auto updater doesn't work anywhere, so until it's fixed, show this
+        @downloadButton.show()
+        return
+
         if process.platform is 'win32'
           if @isChocolateyBuild()
             @chocolateyText.show()
@@ -59,7 +63,7 @@ class ReleaseNotesView extends View
       atom.workspaceView.trigger('application:install-update')
 
     @subscribe @viewReleaseNotesButton, 'click', ->
-      shell.openExternal('https://atom.io/releases')
+      shell.openExternal('https://github.com/spark/spark-dev/releases/')
 
     @subscribe @downloadButton, 'click', ->
-      shell.openExternal('https://atom.io/download/windows')
+      shell.openExternal('https://github.com/spark/spark-dev/releases/tag/' + @releaseVersion)

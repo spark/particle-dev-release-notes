@@ -1,9 +1,9 @@
 {
-  "name": "release-notes",
+  "name": "release-notes-spark",
   "main": "./lib/release-notes",
   "version": "0.36.0",
-  "description": "Displays the release notes of Atom in Atom",
-  "repository": "https://github.com/atom/release-notes",
+  "description": "Displays the release notes of Spark Dev",
+  "repository": "https://github.com/spark/release-notes-spark",
   "license": "MIT",
   "engines": {
     "atom": ">0.50.0"

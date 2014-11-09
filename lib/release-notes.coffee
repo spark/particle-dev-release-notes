@@ -43,4 +43,4 @@ module.exports =
       if atom.isReleasedVersion()
         atom.workspaceView.open(releaseNotesUri)
       else
-        shell.openExternal('https://atom.io/releases')
+        shell.openExternal('https://github.com/spark/spark-dev/releases')
