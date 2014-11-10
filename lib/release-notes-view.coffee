@@ -49,15 +49,6 @@ class ReleaseNotesView extends View
       if @releaseVersion != atom.getVersion()
         # Auto updater doesn't work anywhere, so until it's fixed, show this
         @downloadButton.show()
-        return
-
-        if process.platform is 'win32'
-          if @isChocolateyBuild()
-            @chocolateyText.show()
-          else
-            @downloadButton.show()
-        else
-          @updateButton.show()
 
     @subscribe @updateButton, 'click', ->
       atom.workspaceView.trigger('application:install-update')
