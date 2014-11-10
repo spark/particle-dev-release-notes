@@ -56,5 +56,5 @@ class ReleaseNotesView extends View
     @subscribe @viewReleaseNotesButton, 'click', ->
       shell.openExternal('https://github.com/spark/spark-dev/releases/')
 
-    @subscribe @downloadButton, 'click', ->
+    @subscribe @downloadButton, 'click', =>
       shell.openExternal('https://github.com/spark/spark-dev/releases/tag/' + @releaseVersion)
