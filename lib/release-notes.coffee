@@ -1,46 +1,57 @@
-shell = require 'shell'
-ReleaseNotesView = null
-ReleaseNoteStatusBar = require  './release-notes-status-bar'
-
-releaseNotesUri = 'atom://release-notes'
-
-createReleaseNotesView = (uri, version, releaseNotes) ->
-  ReleaseNotesView ?= require './release-notes-view'
-  new ReleaseNotesView(uri, version, releaseNotes)
-
-deserializer =
-  name: 'ReleaseNotesView'
-  deserialize: ({uri, releaseVersion, releaseNotes}) ->
-    createReleaseNotesView(uri, releaseVersion, releaseNotes)
-atom.deserializers.add(deserializer)
+{$} = require 'atom-space-pen-views'
 
 module.exports =
-  activate: ->
-    if atom.isReleasedVersion()
-      previousVersion = localStorage.getItem('release-notes:previousVersion')
-      localStorage.setItem('release-notes:previousVersion', atom.getVersion())
+  fetch: (version, callback) -> downloadReleaseNotes(version, callback)
 
-      atom.workspaceView.on 'window:update-available', (event, version, releaseNotes) ->
-        localStorage.setItem("release-notes:version", version)
-        localStorage.setItem("release-notes:releaseNotes", releaseNotes)
+downloadReleaseNotes = (version, callback) ->
+  $.ajax
+    url: 'https://api.github.com/repos/spark/spark-dev/releases'
+    dataType: 'json'
+    error: ->
+      errorNotes = createErrorNotes(version)
+      callback?(errorNotes)
+    success: (releases) ->
+      createReleaseNotes version, releases, (releaseNotes) ->
+        callback?(releaseNotes)
 
-      atom.workspace.registerOpener (filePath) ->
-        return unless filePath is releaseNotesUri
+createErrorNotes = (version) ->
+  errorNotes = [{version, notes: 'The release notes failed to download.', error: true}]
+  saveReleaseNotes(errorNotes)
+  errorNotes
 
-        version = localStorage.getItem("release-notes:version")
-        releaseNotes = localStorage.getItem("release-notes:releaseNotes")
-        createReleaseNotesView(filePath, version, releaseNotes)
+saveReleaseNotes = (releaseNotes) ->
+  localStorage.setItem('release-notes:releaseNotes', JSON.stringify(releaseNotes))
 
-      createStatusEntry = -> new ReleaseNoteStatusBar(previousVersion)
+createReleaseNotes = (version, releases, callback) ->
+  releases = [] unless Array.isArray(releases)
 
-      if atom.workspaceView.statusBar?
-        createStatusEntry()
-      else
-        atom.packages.once 'activated', ->
-          createStatusEntry() if atom.workspaceView.statusBar?
+  # Support still showing release notes for manual builds
+  version = version.replace(/-[a-fA-F0-9]{6}$/, '')
 
-    atom.workspaceView.command 'release-notes:show', ->
-      if atom.isReleasedVersion()
-        atom.workspaceView.open(releaseNotesUri)
-      else
-        shell.openExternal('https://github.com/spark/spark-dev/releases')
+  # Skip any releases after the one that was just downloaded
+  releases.shift() while releases[0]? and releases[0].tag_name isnt "v#{version}"
+
+  releaseNotes = releases.map ({body, published_at, tag_name}) ->
+    date: published_at
+    notes: body
+    version: tag_name.substring(1) # remove leading 'v'
+
+  convertMarkdown releaseNotes, ->
+    saveReleaseNotes(releaseNotes)
+    callback(releaseNotes)
+
+convertMarkdown = (releases, callback) ->
+  releases = releases.slice()
+
+  roaster = require 'roaster'
+  options =
+    sanitize: true
+    breaks: true
+
+  convert = (release) ->
+    return callback() unless release?
+    roaster release.notes, options, (error, html) =>
+      release.notes = html unless error?
+      convert(releases.pop())
+
+  convert(releases.pop())

@@ -1,16 +1,16 @@
-ReleaseNotesStatusBar = require '../lib/release-notes-status-bar'
-{WorkspaceView} = require 'atom'
+{$} = require 'atom-space-pen-views'
 
 triggerUpdate = ->
-  atom.workspaceView.trigger 'window:update-available', ['v22.0.0', "NOTES"]
+  atom.commands.dispatch(atom.views.getView(atom.workspace), 'window:update-available', ['v22.0.0'])
 
 describe "ReleaseNotesStatusBar", ->
-  [releaseNotesStatus, releaseNotesStatusBar]  = []
-
   beforeEach ->
     spyOn(atom, 'isReleasedVersion').andReturn(true)
+    storage = {}
+    spyOn(localStorage, 'setItem').andCallFake (key, value) -> storage[key] = value
+    spyOn(localStorage, 'getItem').andCallFake (key) -> storage[key]
 
-    atom.workspaceView = new WorkspaceView
+    jasmine.attachToDOM(atom.views.getView(atom.workspace))
 
     waitsForPromise ->
       atom.packages.activatePackage('status-bar')
@@ -18,22 +18,21 @@ describe "ReleaseNotesStatusBar", ->
     waitsForPromise ->
       atom.packages.activatePackage('release-notes')
 
-    atom.workspaceView.openSync('sample.js')
+    waitsForPromise ->
+      atom.workspace.open('sample.js')
 
   describe "with no update", ->
-    it "renders", ->
-      expect(atom.workspaceView).not.toContain('.release-notes-status')
+    it "does not show the view", ->
+      expect(atom.views.getView(atom.workspace)).not.toContain('.release-notes-status')
 
   describe "with an update", ->
-    it "renders when the update is made available", ->
+    it "shows the view when the update is made available", ->
       triggerUpdate()
-      expect(atom.workspaceView).toContain('.release-notes-status')
+      expect(atom.views.getView(atom.workspace)).toContain('.release-notes-status')
 
     describe "clicking on the status", ->
-      [workspaceViewOpen] = []
-
       it "opens the release notes view", ->
-        workspaceViewOpen = spyOn(atom.workspaceView, 'open')
+        workspaceOpen = spyOn(atom.workspace, 'open')
         triggerUpdate()
-        atom.workspaceView.find('.release-notes-status').trigger('click')
-        expect(workspaceViewOpen.mostRecentCall.args[0]).toBe 'atom://release-notes'
+        $(atom.views.getView(atom.workspace)).find('.release-notes-status').trigger('click')
+        expect(workspaceOpen.mostRecentCall.args[0]).toBe 'atom://release-notes'

@@ -1,23 +1,15 @@
-shell = require 'shell'
-{View} = require 'atom'
+{$$, View} = require 'atom-space-pen-views'
+{Disposable} = require 'atom'
 
 module.exports =
 class ReleaseNotesView extends View
   @content: ->
     @div class: 'release-notes padded pane-item native-key-bindings', tabindex: -1, =>
-      @h1 class: 'section-heading', outlet: 'version'
-      @div class: 'description', outlet: 'description'
-
       @div class: 'block', =>
-        @h2 class: 'inline-block', outlet: 'chocolateyText', =>
-          @span 'Run '
-          @code 'cup Atom'
-          @span ' to install the latest Atom release.'
-
+        @button class: 'inline-block hidden btn btn-success', outlet: 'updateButton', 'Restart and update'
+        @button class: 'inline-block btn', outlet: 'viewReleaseNotesButton', 'View on atom.io'
       @div class: 'block', =>
-        @button class: 'inline-block update-instructions btn btn-success', outlet: 'updateButton', 'Restart and update'
-        @button class: 'inline-block download-instructions btn btn-success', outlet: 'downloadButton', 'Download new version'
-        @button class: 'inline-block btn', outlet: 'viewReleaseNotesButton', 'View past release notes'
+        @div outlet: 'notesContainer'
 
   getTitle: ->
     'Release Notes'
@@ -25,7 +17,7 @@ class ReleaseNotesView extends View
   getIconName: ->
     'squirrel'
 
-  getUri: ->
+  getURI: ->
     @uri
 
   serialize: ->
@@ -34,27 +26,46 @@ class ReleaseNotesView extends View
     releaseNotes: @releaseNotes
     releaseVersion: @releaseVersion
 
-  isChocolateyBuild: ->
-    /chocolatey/i.test atom.getLoadSettings().resourcePath
+  #TODO Remove both of these post 1.0
+  onDidChangeTitle: -> new Disposable()
+  onDidChangeModified: -> new Disposable()
 
   initialize: (@uri, @releaseVersion, @releaseNotes) ->
-    @updateButton.hide()
-    @downloadButton.hide()
-    @chocolateyText.hide()
+    @releaseVersion ?= atom.getVersion()
 
-    if @releaseNotes? and @releaseVersion?
-      @description.html(@releaseNotes)
-      @version.text(@releaseVersion)
+    # Support old format
+    if typeof @releaseNotes is 'string'
+      @releaseNotes = [{version: @releaseVersion, notes: @releaseNotes, error: true}]
 
-      if @releaseVersion != atom.getVersion()
-        # Auto updater doesn't work anywhere, so until it's fixed, show this
-        @downloadButton.show()
+    @releaseNotes ?= []
 
-    @subscribe @updateButton, 'click', ->
-      atom.workspaceView.trigger('application:install-update')
+    @updateButton.removeClass('hidden') if @releaseVersion isnt atom.getVersion()
+    @addReleaseNotes()
+    @fetchReleaseNotes()
 
-    @subscribe @viewReleaseNotesButton, 'click', ->
-      shell.openExternal('https://github.com/spark/spark-dev/releases/')
+    @updateButton.on 'click', ->
+      atom.commands.dispatch(atom.views.getView(atom.workspace), 'application:install-update')
 
-    @subscribe @downloadButton, 'click', =>
-      shell.openExternal('https://github.com/spark/spark-dev/releases/tag/' + @releaseVersion)
+    @viewReleaseNotesButton.on 'click', ->
+      require('shell').openExternal('https://github.com/spark/spark-dev/releases/')
+
+  fetchReleaseNotes: ->
+    require('./release-notes').fetch @releaseVersion, (releaseNotes) =>
+      return if releaseNotes.length is 0
+      if @releaseNotes.length is 0 or @releaseNotes[0].error or not releaseNotes[0].error
+        @releaseNotes = releaseNotes
+        @addReleaseNotes()
+
+  addReleaseNotes: ->
+    @notesContainer.empty()
+
+    for {date, notes, version} in @releaseNotes
+      @notesContainer.append $$ ->
+        if date?
+          @h1 class: 'section-heading', =>
+            @span class: 'text-highlight', "#{version} "
+            @small new Date(date).toLocaleString()
+        else
+          @h1 class: 'section-heading text-highlight', version
+        @div class: 'description', =>
+          @raw notes

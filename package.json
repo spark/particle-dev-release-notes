@@ -1,12 +1,22 @@
 {
   "name": "release-notes-spark",
-  "main": "./lib/release-notes",
-  "version": "0.36.0",
+  "main": "./lib/main",
+  "version": "0.52.0",
   "description": "Displays the release notes of Spark Dev",
   "repository": "https://github.com/spark/release-notes-spark",
   "license": "MIT",
   "engines": {
     "atom": ">0.50.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "roaster": "^1.1.2",
+    "atom-space-pen-views": "^2.0.0"
+  },
+  "consumedServices": {
+    "status-bar": {
+      "versions": {
+        "^1.0.0": "consumeStatusBar"
+      }
+    }
+  }
 }
