@@ -1,13 +1,13 @@
-{$$, View} = require 'atom-space-pen-views'
+{$$, ScrollView} = require 'atom-space-pen-views'
 {Disposable} = require 'atom'
 
 module.exports =
-class ReleaseNotesView extends View
+class ReleaseNotesView extends ScrollView
   @content: ->
     @div class: 'release-notes padded pane-item native-key-bindings', tabindex: -1, =>
       @div class: 'block', =>
         @button class: 'inline-block hidden btn btn-success', outlet: 'updateButton', 'Restart and update'
-        @button class: 'inline-block btn', outlet: 'viewReleaseNotesButton', 'View on atom.io'
+        @button class: 'inline-block btn', outlet: 'viewReleaseNotesButton', 'View on GitHub'
       @div class: 'block', =>
         @div outlet: 'notesContainer'
 
@@ -26,11 +26,8 @@ class ReleaseNotesView extends View
     releaseNotes: @releaseNotes
     releaseVersion: @releaseVersion
 
-  #TODO Remove both of these post 1.0
-  onDidChangeTitle: -> new Disposable()
-  onDidChangeModified: -> new Disposable()
-
   initialize: (@uri, @releaseVersion, @releaseNotes) ->
+    super
     @releaseVersion ?= atom.getVersion()
 
     # Support old format
