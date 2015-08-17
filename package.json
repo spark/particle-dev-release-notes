@@ -1,7 +1,7 @@
 {
   "name": "particle-dev-release-notes",
   "main": "./lib/main",
-  "version": "0.53.1",
+  "version": "0.53.2",
   "description": "Displays the release notes of Particle Dev",
   "repository": "https://github.com/spark/particle-dev-release-notes",
   "license": "MIT",
