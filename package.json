@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "roaster": "^1.1.2",
-    "atom-space-pen-views": "^2.1.0"
+    "atom-space-pen-views": "^2.1.0",
+    "snyk": "^1.25.0"
   },
   "consumedServices": {
     "status-bar": {
@@ -21,5 +22,10 @@
   },
   "devDependencies": {
     "coffeelint": "^1.9.7"
-  }
+  },
+  "scripts": {
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
+  },
+  "snyk": true
 }
