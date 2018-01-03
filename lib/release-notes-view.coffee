@@ -44,7 +44,7 @@ class ReleaseNotesView extends ScrollView
       atom.commands.dispatch(atom.views.getView(atom.workspace), 'application:install-update')
 
     @viewReleaseNotesButton.on 'click', ->
-      require('shell').openExternal('https://github.com/spark/spark-dev/releases/')
+      require('shell').openExternal('https://github.com/particle-iot/spark-dev/releases/')
 
   fetchReleaseNotes: ->
     require('./release-notes').fetch @releaseVersion, (releaseNotes) =>
